@@ -7,25 +7,33 @@ public class Speech : MonoBehaviour
 
     public AudioSource audioSource;
     public DialogSystem _dialogueSystemScript;
+    Animator anim;
 
     void Start()
     {
         audioSource = GetComponent<AudioSource>();
         _dialogueSystemScript = GameObject.Find("FPS").GetComponent<DialogSystem>();
+        anim = GetComponent<Animator>();
     }
 
     public void PlaySound()
     {
         audioSource.Play();
-        _dialogueSystemScript.IsAnimationEnd = false;
-        //Debug.Log("---IsAnimatedEnd = false---");
+        Debug.Log("StartSound");
     }
 
     public void StopSound()
     {
         audioSource.Stop();
-        _dialogueSystemScript.IsAnimationEnd = true;
-        //Debug.Log("---IsAnimatedEnd = true---");
+        anim.SetInteger("TriggerInt", 0);
+
+        /*_dialogueSystemScript._animators[i][0].SetInteger("TriggerInt", 0);
+
+        _dialogueSystemScript._animators[i][1].SetInteger("TriggerInt", 0);
+        */
+
+
+        Debug.Log("StopSound");
     }
 
 }
