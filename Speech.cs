@@ -8,6 +8,8 @@ public class Speech : MonoBehaviour
     public AudioSource audioSource;
     public DialogSystem _dialogueSystemScript;
     Animator anim;
+    public bool IsAdded = false;
+    public bool IsTalk = false;
 
     void Start()
     {
@@ -19,21 +21,12 @@ public class Speech : MonoBehaviour
     public void PlaySound()
     {
         audioSource.Play();
-        Debug.Log("StartSound");
     }
 
     public void StopSound()
     {
         audioSource.Stop();
         anim.SetInteger("TriggerInt", 0);
-
-        /*_dialogueSystemScript._animators[i][0].SetInteger("TriggerInt", 0);
-
-        _dialogueSystemScript._animators[i][1].SetInteger("TriggerInt", 0);
-        */
-
-
-        Debug.Log("StopSound");
     }
 
 }
