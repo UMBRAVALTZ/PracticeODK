@@ -2,3 +2,6 @@ https://drive.google.com/drive/folders/1nMvxSN934d7FFyYDYfHi8-e_twWV2GyC?usp=sha
 
 https://www.degruyter.com/document/doi/10.2478/aut-2022-0025/html
 https://wujns.edpsciences.org/articles/wujns/full_html/2023/06/wujns-1007-1202-2023-06-0508-15/wujns-1007-1202-2023-06-0508-15.html
+
+Determination of the density of the canvas using computer vision
+Determination of the density of the fabric using computer vision
