@@ -1,74 +1,105 @@
-package org.example;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.Files;
-import java.util.zip.*;
 import java.io.*;
+import java.util.Scanner;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 
 public class Main {
-    public static void main(String[] args) throws IOException {
-        if (args[0].equals("pack")) {
-            pack2(args[1], args[2]);
-        } else if (args[0].equals("unpack")) {
-            unpack(args[1], args[2]);
-        }
-        else {
-            System.out.println("Unknown Command...");
-        }
-    }
 
-    private static void pack(/*String zipName, String fileToZip*/) throws IOException {
-        byte[] buffer = Files.readAllBytes(Paths.get("d:/notes.txt"));
-        try (ZipOutputStream zout = new ZipOutputStream(new FileOutputStream("d:/outputZipchik.zip"))) {
-            ZipEntry entry1 = new ZipEntry("zipchik");
-            zout.putNextEntry(entry1);
-            zout.write(buffer);
-            zout.closeEntry();
-        }
-    }
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
 
+        System.out.println("Введите команду (pack/unpack):");
+        String command = scanner.nextLine();
 
-    private static void pack2(String zipFilePath, String sourcePath) throws IOException{
-        Path p = Files.createFile(Paths.get(zipFilePath));
-        try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(p))) {
-            Path pp = Paths.get(sourcePath);
-            Files.walk(pp).filter(path -> !Files.isDirectory(path)).forEach(path -> {
-                ZipEntry zipEntry = new ZipEntry(pp.relativize(path).toString());
-                try {
-                    zs.putNextEntry(zipEntry);
-                    Files.copy(path, zs);
-                    zs.closeEntry();
-                } catch (IOException e) {
-                    System.err.println(e);
-                }
-            });
+        System.out.println("Введите имя zip-архива:");
+        String zipFileName = scanner.nextLine();
+
+        System.out.println("Введите каталог/файл:");
+        String sourceFile = scanner.nextLine();
+
+        try {
+            if ("pack".equalsIgnoreCase(command)) {
+                pack(zipFileName, sourceFile);
+            } else if ("unpack".equalsIgnoreCase(command)) {
+                unpack(zipFileName, sourceFile);
+            } else {
+                System.out.println("Неизвестная команда: " + command);
+            }
+        } catch (IOException e) {
+            System.err.println("Ошибка: " + e.getMessage());
+        } finally {
+            scanner.close();
         }
     }
 
-    private static void unpack(String zipFilePath, String outputPath) throws IOException {
-        File base = new File(outputPath);
-        base.mkdir();
-        try (ZipInputStream zin = new ZipInputStream(new FileInputStream(zipFilePath))) {
-            ZipEntry entry;
-            while ((entry = zin.getNextEntry()) != null) {
-                System.out.println(entry.getName());
-                if (entry.getName().endsWith("/")) {
-                    base = new File(outputPath + "/" + entry.getName());
-                    base.mkdir();
-                    base = new File(outputPath);
-                }
-                else {
-                    try (FileOutputStream fout = new FileOutputStream(new File(base, entry.getName()))) {
+    private static void pack(String zipFileName, String sourceFile) throws IOException {
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFileName))) {
+            File fileToZip = new File(sourceFile);
+            if (fileToZip.isDirectory()) {
+                zipDirectory(fileToZip, fileToZip.getName(), zos);
+            } else {
+                zipFile(fileToZip, zos);
+            }
+            System.out.println("Архив " + zipFileName + " успешно создан.");
+        }
+    }
 
-                        for (int c = zin.read(); c != -1; c = zin.read()) {
-                            fout.write(c);
-                        }
-                    }
-                    zin.closeEntry();
-                }
-
+    private static void zipDirectory(File folderToZip, String folderName, ZipOutputStream zos) throws IOException {
+        for (File file : folderToZip.listFiles()) {
+            if (file.isDirectory()) {
+                zipDirectory(file, folderName + "/" + file.getName(), zos);
+            } else {
+                zipFile(file, zos, folderName);
             }
         }
+    }
+
+    private static void zipFile(File fileToZip, ZipOutputStream zos) throws IOException {
+        zipFile(fileToZip, zos, "");
+    }
+
+    private static void zipFile(File fileToZip, ZipOutputStream zos, String folderName) throws IOException {
+        try (FileInputStream fis = new FileInputStream(fileToZip)) {
+            ZipEntry zipEntry = new ZipEntry(folderName + (folderName.isEmpty() ? "" : "/") + fileToZip.getName());
+            zos.putNextEntry(zipEntry);
+
+            byte[] bytes = new byte[1024];
+            int length;
+            while ((length = fis.read(bytes)) >= 0) {
+                zos.write(bytes, 0, length);
+            }
+            zos.closeEntry();
+        }
+    }
+
+    private static void unpack(String zipFileName, String destDir) throws IOException {
+        File dir = new File(destDir);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipFileName))) {
+            ZipEntry zipEntry;
+            while ((zipEntry = zis.getNextEntry()) != null) {
+                File newFile = new File(destDir, zipEntry.getName());
+                if (zipEntry.isDirectory()) {
+                    newFile.mkdirs();
+                } else {
+                    // Создаем все необходимые родительские директории
+                    new File(newFile.getParent()).mkdirs();
+                    // Записываем файл
+                    try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(newFile))) {
+                        byte[] buffer = new byte[1024];
+                        int len;
+                        while ((len = zis.read(buffer)) > 0) {
+                            bos.write(buffer, 0, len);
+                        }
+                    }
+                }
+                zis.closeEntry();
+            }
+        }
+        System.out.println("Архив " + zipFileName + " успешно распакован в " + destDir);
     }
 }
